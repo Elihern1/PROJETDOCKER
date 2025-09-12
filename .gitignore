@@ -1,0 +1,17 @@
+# Node.js
+api/node_modules
+api/npm-debug.log
+api/yarn-error.log
+
+# Logs
+*.log
+
+# Docker volumes (MongoDB data)
+mongo_data/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Env file (ne pas partager tes secrets en clair)
+.env
