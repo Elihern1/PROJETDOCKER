@@ -3,6 +3,7 @@ import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import cors from "cors";
+import "dotenv/config";  
 import routes from "./routes/games.js";
 
 const app = express();
@@ -39,6 +40,16 @@ app.use("/api/games", routes);
 // Ping debug
 app.get("/api/ping", (_req, res) => res.json({ pong: true }));
 
+// Erreurs de validation/cast Mongoose -> 400
+app.use((err, req, res, next) => {
+  if (err?.name === "ValidationError") {
+    return res.status(400).json({ error: err.message, details: err.errors });
+  }
+  if (err?.name === "CastError") {
+    return res.status(400).json({ error: `Invalid ${err.path}: ${err.value}` });
+  }
+  return next(err); // laisse le global 500 gérer le reste
+});
 // Error handler global (attrape les erreurs des handlers async)
 app.use((err, req, res, _next) => {
   console.error("API error:", err);
