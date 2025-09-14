@@ -13,5 +13,5 @@ mongo_data/
 .DS_Store
 Thumbs.db
 
-# Env file (ne pas partager tes secrets en clair)
+# Env file
 .env
