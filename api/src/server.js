@@ -3,44 +3,56 @@ import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import cors from "cors";
-import "dotenv/config";  
+import "dotenv/config";
 import routes from "./routes/games.js";
+
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Middlewares
+/* ---------- Middlewares ---------- */
+// Sert le dossier public/ à la racine (index.html, css, js, assets, …)
+app.use(express.static(path.resolve(__dirname, "../public")));
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json());                   // JSON (fetch/axios)
+app.use(express.urlencoded({ extended: true })); // <form> HTML (x-www-form-urlencoded)
 app.use(morgan("dev"));
 
-// Health route
-app.get("/", (_req, res) => res.json({ ok: true, service: "game-api" }));
-
-// Index API (optionnel mais pratique)
+/* ---------- API ---------- */
+// Index API (liste les endpoints)
 app.get("/api", (_req, res) => {
   res.json({
     ok: true,
     message: "Game API",
     endpoints: [
-      "GET    /",
       "GET    /api",
+      "GET    /api/health",
       "GET    /api/ping",
       "GET    /api/games",
       "POST   /api/games",
       "GET    /api/games/:id",
       "PUT    /api/games/:id",
-      "DELETE /api/games/:id"
-    ]
+      "DELETE /api/games/:id",
+    ],
   });
 });
 
-// Routes métier
-app.use("/api/games", routes);
+// Health route (déplacée pour ne pas écraser / qui doit servir index.html)
+app.get("/api/health", (_req, res) => res.json({ ok: true, service: "game-api" }));
 
 // Ping debug
 app.get("/api/ping", (_req, res) => res.json({ pong: true }));
 
-// Erreurs de validation/cast Mongoose -> 400
+// Routes métier
+app.use("/api/games", routes);
+
+/* ---------- Gestion erreurs ---------- */
+// Erreurs Mongoose -> 400
 app.use((err, req, res, next) => {
   if (err?.name === "ValidationError") {
     return res.status(400).json({ error: err.message, details: err.errors });
@@ -48,17 +60,17 @@ app.use((err, req, res, next) => {
   if (err?.name === "CastError") {
     return res.status(400).json({ error: `Invalid ${err.path}: ${err.value}` });
   }
-  return next(err); // laisse le global 500 gérer le reste
+  return next(err);
 });
-// Error handler global (attrape les erreurs des handlers async)
+
+// Handler global
 app.use((err, req, res, _next) => {
   console.error("API error:", err);
   res.status(500).json({ error: err?.message || "Internal Server Error" });
 });
 
-// ---- Config & démarrage ----
+/* ---------- Démarrage ---------- */
 const PORT = process.env.PORT || 3000;
-// En local hors Docker, exporter MONGO_URI="mongodb://localhost:27017/gamesdb"
 const DEFAULT_URI = "mongodb://mongo:27017/gamesdb";
 const MONGO_URI = process.env.MONGO_URI || DEFAULT_URI;
 
