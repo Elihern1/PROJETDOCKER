@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gestion des jeux vidéo</title>
 
-  <!-- Favicon (optionnel) -->
   <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
-
-  <!-- CSS -->
   <link rel="stylesheet" href="/css/global.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 </head>
 <body>
-  <!-- (Optionnel) barre de nav -->
+  <!-- Barre de nav -->
   <nav class="navbar navbar-dark bg-dark">
     <div class="container">
       <span class="navbar-brand mb-0 h1">API - Jeux Vidéos</span>
@@ -24,13 +21,13 @@
   <main class="container my-5">
     <h1 class="text-center mb-4">Liste des jeux vidéo</h1>
 
-    <!-- Alerte (succès/erreur) -->
+    <!-- Alerte -->
     <div id="alertContainer" class="alert alert-success alert-dismissible fade show d-none" role="alert">
       <span id="alertMessage"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
     </div>
 
-    <!-- Tableau des jeux -->
+    <!-- Tableau -->
     <div class="card shadow-sm mb-5">
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -43,14 +40,12 @@
                 <th>Année</th>
                 <th>Prix ($)</th>
                 <th>En stock</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="gameTableBody">
-              <!-- état de chargement par défaut -->
               <tr>
-                <td colspan="6" class="text-center text-muted py-4">
-                  Chargement des jeux…
-                </td>
+                <td colspan="7" class="text-center text-muted py-4">Chargement des jeux…</td>
               </tr>
             </tbody>
           </table>
@@ -101,14 +96,78 @@
   </main>
 
   <footer class="bg-dark text-white text-center py-3 mt-5">
-    <p class="mb-0">&copy; 2025 </p>
+    <p class="mb-0">&copy; 2025</p>
   </footer>
 
+  <!-- Modal Édition -->
+  <div class="modal fade" id="editGameModal" tabindex="-1" aria-labelledby="editGameModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="editGameForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editGameModalLabel">Modifier le jeu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editId" />
+          <div class="mb-3">
+            <label for="editTitle" class="form-label">Titre *</label>
+            <input type="text" id="editTitle" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label for="editPlatform" class="form-label">Plateforme *</label>
+            <input type="text" id="editPlatform" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label for="editGenre" class="form-label">Genre</label>
+            <input type="text" id="editGenre" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label for="editReleaseYear" class="form-label">Année de sortie</label>
+            <input type="text" id="editReleaseYear" class="form-control datepicker" placeholder="YYYY" />
+          </div>
+          <div class="mb-3">
+            <label for="editPrice" class="form-label">Prix ($)</label>
+            <input type="number" id="editPrice" class="form-control" step="0.01" />
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="editInStock" />
+            <label class="form-check-label" for="editInStock">Disponible en stock</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmation Suppression -->
+  <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmer la suppression</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          Voulez-vous vraiment supprimer <strong id="deleteTitlePreview"></strong> ?
+          <input type="hidden" id="deleteId" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- JS externes -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
 
-  <!-- Ton script qui remplit le tableau et gère le formulaire -->
+  <!-- Script appli -->
   <script src="/js/script.js"></script>
 </body>
 </html>

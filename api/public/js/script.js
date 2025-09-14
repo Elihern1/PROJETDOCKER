@@ -1,110 +1,42 @@
-// --------- Helpers UI ----------
-function showAlert(message, type = "success") {
-  const alert = document.getElementById("alertContainer");
-  const msg = document.getElementById("alertMessage");
-  alert.classList.remove("d-none", "alert-success", "alert-danger", "alert-info");
-  alert.classList.add(`alert-${type}`);
-  msg.textContent = message;
+// /public/js/script.js
 
-  // auto-hide après 3s
-  setTimeout(() => {
-    alert.classList.add("d-none");
-  }, 3000);
-}
-
-function setLoading(isLoading) {
-  const btn = document.querySelector("#gameForm button[type='submit']");
-  if (!btn) return;
-  btn.disabled = isLoading;
-  btn.textContent = isLoading ? "Ajout en cours..." : "Ajouter le jeu";
-}
-
-// --------- API ----------
 const API_BASE = "/api/games";
 
-async function fetchGames() {
-  const res = await fetch(API_BASE);
-  if (!res.ok) throw new Error("Erreur lors du chargement des jeux");
-  return res.json();
-}
+// --- DOM ---
+const tbody = document.getElementById("gameTableBody");
+const alertBox = document.getElementById("alertContainer");
+const alertMsg = document.getElementById("alertMessage");
 
-async function createGame(payload) {
-  const res = await fetch(API_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || "Erreur lors de la création");
-  }
-  return res.json();
-}
+// Formulaire d'ajout
+const form = document.getElementById("gameForm");
+const fTitle = document.getElementById("title");
+const fPlatform = document.getElementById("platform");
+const fGenre = document.getElementById("genre");
+const fReleaseYear = document.getElementById("releaseYear");
+const fPrice = document.getElementById("price");
+const fInStock = document.getElementById("inStock");
 
-async function deleteGame(id) {
-  const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-  if (res.status === 204) return true;
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || "Suppression impossible");
-  }
-  return true;
-}
+// Modal d'édition
+const editForm = document.getElementById("editGameForm");
+const editId = document.getElementById("editId");
+const editTitle = document.getElementById("editTitle");
+const editPlatform = document.getElementById("editPlatform");
+const editGenre = document.getElementById("editGenre");
+const editReleaseYear = document.getElementById("editReleaseYear");
+const editPrice = document.getElementById("editPrice");
+const editInStock = document.getElementById("editInStock");
+let editModalInstance = null;
 
-// --------- Rendu du tableau ----------
-function renderGamesTable(games = []) {
-  const tbody = document.getElementById("gameTableBody");
-  tbody.innerHTML = "";
+// Modal suppression
+const confirmDeleteModalEl = document.getElementById("confirmDeleteModal");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const deleteTitlePreview = document.getElementById("deleteTitlePreview");
+const deleteIdInput = document.getElementById("deleteId");
+let confirmDeleteModalInstance = null;
 
-  if (!games.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" class="text-center text-muted">Aucun jeu pour le moment</td>
-      </tr>`;
-    return;
-  }
-
-  for (const g of games) {
-    const tr = document.createElement("tr");
-
-    const year =
-      g.releaseDate ? new Date(g.releaseDate).getFullYear() :
-      g.releaseYear ?? "-";
-
-    tr.innerHTML = `
-      <td>${escapeHTML(g.title)}</td>
-      <td>${escapeHTML(g.platform)}</td>
-      <td>${escapeHTML(g.genre || "-")}</td>
-      <td>${year}</td>
-      <td>${Number(g.price).toFixed(2)}</td>
-      <td>${g.inStock ? "Oui" : "Non"}</td>
-    `;
-
-    // bouton supprimer
-    const tdActions = document.createElement("td");
-    const btnDel = document.createElement("button");
-    btnDel.className = "btn btn-sm btn-outline-danger";
-    btnDel.textContent = "Supprimer";
-    btnDel.addEventListener("click", async () => {
-      if (!confirm(`Supprimer "${g.title}" ?`)) return;
-      try {
-        await deleteGame(g._id);
-        showAlert("Jeu supprimé", "success");
-        await loadAndRender(); // refresh
-      } catch (e) {
-        showAlert(e.message || "Erreur de suppression", "danger");
-      }
-    });
-    tdActions.appendChild(btnDel);
-    tr.appendChild(tdActions);
-
-    tbody.appendChild(tr);
-  }
-}
-
-// petite fonction d’échappement pour éviter l’injection
-function escapeHTML(str) {
-  return (str ?? "").toString()
+// --- Helpers ---
+function escapeHtml(s) {
+  return String(s ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -112,80 +44,209 @@ function escapeHTML(str) {
     .replaceAll("'", "&#039;");
 }
 
-// --------- Formulaire ----------
-function setupForm() {
-  const form = document.getElementById("gameForm");
-  if (!form) return;
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const title = document.getElementById("title").value.trim();
-    const platform = document.getElementById("platform").value.trim();
-    const genre = document.getElementById("genre").value.trim();
-    const releaseYear = document.getElementById("releaseYear").value.trim();
-    const price = document.getElementById("price").value;
-    const inStock = document.getElementById("inStock").checked;
-
-    // Le modèle attend releaseDate (Date). On convertit l'année en 1er janvier de l’année.
-    let releaseDate = undefined;
-    if (releaseYear) {
-      const y = parseInt(releaseYear, 10);
-      if (!isNaN(y) && y >= 1970 && y <= 2100) {
-        releaseDate = `${y}-01-01`;
-      }
-    }
-
-    const payload = {
-      title,
-      platform,
-      genre: genre || undefined,
-      price: Number(price),
-      inStock,
-      ...(releaseDate ? { releaseDate } : {}),
-    };
-
-    try {
-      setLoading(true);
-      await createGame(payload);
-      form.reset();
-      showAlert("Jeu ajouté avec succès !");
-      await loadAndRender();
-    } catch (err) {
-      showAlert(err.message || "Erreur lors de l’ajout", "danger");
-    } finally {
-      setLoading(false);
-    }
-  });
+function showAlert(message, type = "success", ms = 2500) {
+  alertBox.classList.remove("d-none", "alert-success", "alert-danger", "alert-info", "alert-warning");
+  alertBox.classList.add(`alert-${type}`);
+  alertMsg.textContent = message;
+  if (ms) setTimeout(() => alertBox.classList.add("d-none"), ms);
 }
 
-// --------- Chargement initial ----------
-async function loadAndRender() {
+function yearFromDateLike(v) {
   try {
-    const games = await fetchGames();
-    renderGamesTable(games);
-  } catch (e) {
-    renderGamesTable([]);
-    showAlert(e.message || "Impossible de charger les jeux", "danger");
+    if (!v) return "";
+    const y = new Date(v).getFullYear();
+    return Number.isFinite(y) ? y : "";
+  } catch {
+    return "";
   }
 }
 
-function initFlatpickrYear() {
-  // on utilise flatpickr pour faciliter la saisie d'année
-  if (window.flatpickr) {
-    flatpickr("#releaseYear", {
-      dateFormat: "Y",
-      altInput: true,
-      altFormat: "Y",
-      allowInput: true,
-      defaultDate: null,
+function dateFromYearInput(value) {
+  if (!value) return undefined;
+  const y = Number(value);
+  if (!Number.isFinite(y)) return undefined;
+  return new Date(y, 0, 1);
+}
+
+// --- Chargement des jeux ---
+async function loadGames() {
+  tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chargement…</td></tr>`;
+  try {
+    const res = await fetch(API_BASE);
+    if (!res.ok) throw new Error(`GET ${res.status}`);
+    const games = await res.json();
+    renderRows(games);
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erreur de chargement</td></tr>`;
+  }
+}
+
+function renderRows(games) {
+  if (!Array.isArray(games) || games.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Aucun jeu</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = games.map(g => {
+    const year = yearFromDateLike(g.releaseDate);
+    const price = (typeof g.price === "number") ? g.price.toFixed(2) : (g.price ?? "");
+    const stock = g.inStock ? "Oui" : "Non";
+
+    return `
+      <tr data-id="${g._id}">
+        <td>${escapeHtml(g.title)}</td>
+        <td>${escapeHtml(g.platform)}</td>
+        <td>${escapeHtml(g.genre ?? "")}</td>
+        <td>${escapeHtml(year)}</td>
+        <td>${escapeHtml(price)}</td>
+        <td>${stock}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-primary edit-btn me-2">Modifier</button>
+          <button class="btn btn-sm btn-outline-danger delete-btn">Supprimer</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// --- Ajout (POST) ---
+form?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    title: fTitle.value.trim(),
+    platform: fPlatform.value.trim(),
+    genre: fGenre.value.trim() || undefined,
+    releaseDate: dateFromYearInput(fReleaseYear.value),
+    price: fPrice.value ? Number(fPrice.value) : undefined,
+    inStock: !!fInStock.checked,
+  };
+
+  try {
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
-  }
-}
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || `POST ${res.status}`);
 
-// Démarrage
+    form.reset();
+    fInStock.checked = true;
+    showAlert("Jeu ajouté avec succès !");
+    await loadGames();
+  } catch (err) {
+    console.error(err);
+    showAlert(err.message || "Erreur lors de l'ajout", "danger", 5000);
+  }
+});
+
+// --- Ouvrir le modal d'édition ---
+tbody.addEventListener("click", async (e) => {
+  const editBtn = e.target.closest(".edit-btn");
+  const delBtn = e.target.closest(".delete-btn");
+  if (!editBtn && !delBtn) return;
+
+  const tr = e.target.closest("tr");
+  const id = tr?.dataset?.id;
+  if (!id) return;
+
+  // EDIT
+  if (editBtn) {
+    try {
+      const res = await fetch(`${API_BASE}/${id}`);
+      const g = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(g?.error || `GET ${res.status}`);
+
+      editId.value = g._id || "";
+      editTitle.value = g.title ?? "";
+      editPlatform.value = g.platform ?? "";
+      editGenre.value = g.genre ?? "";
+      editReleaseYear.value = yearFromDateLike(g.releaseDate) || "";
+      editPrice.value = (typeof g.price === "number" ? g.price : (g.price ?? ""));
+      editInStock.checked = !!g.inStock;
+
+      if (!editModalInstance && window.bootstrap) {
+        editModalInstance = new bootstrap.Modal(document.getElementById("editGameModal"));
+      }
+      editModalInstance?.show();
+    } catch (err) {
+      console.error(err);
+      showAlert("Impossible de charger le jeu à modifier", "danger", 5000);
+    }
+    return;
+  }
+
+  // DELETE (ouvre la confirmation)
+  if (delBtn) {
+    deleteIdInput.value = id;
+    deleteTitlePreview.textContent = tr.querySelector("td")?.textContent?.trim() || "ce jeu";
+    if (!confirmDeleteModalInstance && window.bootstrap) {
+      confirmDeleteModalInstance = new bootstrap.Modal(confirmDeleteModalEl);
+    }
+    confirmDeleteModalInstance?.show();
+  }
+});
+
+// --- Enregistrer la modification (PUT) ---
+editForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = editId.value;
+  if (!id) return;
+
+  const releaseDate = dateFromYearInput(editReleaseYear.value);
+  const payload = {
+    title: editTitle.value.trim(),
+    platform: editPlatform.value.trim(),
+    genre: editGenre.value.trim() || undefined,
+    price: editPrice.value ? Number(editPrice.value) : undefined,
+    inStock: !!editInStock.checked,
+    ...(releaseDate ? { releaseDate } : {}),
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || `PUT ${res.status}`);
+
+    editModalInstance?.hide();
+    showAlert("Jeu modifié avec succès !");
+    await loadGames();
+  } catch (err) {
+    console.error(err);
+    showAlert(err.message || "Erreur lors de la modification", "danger", 5000);
+  }
+});
+
+// --- Confirmer suppression (DELETE) ---
+confirmDeleteBtn?.addEventListener("click", async () => {
+  const id = deleteIdInput.value;
+  if (!id) return;
+  try {
+    const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || `DELETE ${res.status}`);
+    }
+    confirmDeleteModalInstance?.hide();
+    showAlert("Jeu supprimé avec succès !");
+    await loadGames();
+  } catch (err) {
+    console.error(err);
+    showAlert(err.message || "Erreur lors de la suppression", "danger", 5000);
+  }
+});
+
+// --- Init ---
 document.addEventListener("DOMContentLoaded", () => {
-  initFlatpickrYear();
-  setupForm();
-  loadAndRender();
+  if (window.flatpickr) {
+    flatpickr("#releaseYear", { locale: "fr", dateFormat: "Y", allowInput: true });
+    flatpickr("#editReleaseYear", { locale: "fr", dateFormat: "Y", allowInput: true });
+  }
+  loadGames();
 });

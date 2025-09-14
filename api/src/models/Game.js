@@ -14,7 +14,7 @@ const gameSchema = new mongoose.Schema(
       required: [true, "Une plateforme est nécéssaire"],
       trim: true,
       enum: {
-        values: ["PC", "PlayStation", "Xbox", "Switch", "Mobile", "Autre"],
+        values: ["PC", "Playstation", "Xbox", "Switch", "Mobile", "Autre"],
         message: "Plateforme invalide",
       },
     },
