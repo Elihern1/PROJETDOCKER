@@ -31,7 +31,7 @@ main {
 }
 /* Header et footer custom */
 .custom-navbar {
-  background-color: var(--primary);  /* bleu Material-like */
+  background-color: var(--primary); 
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
 }
@@ -78,13 +78,40 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
+.form-check-input {
+  appearance: auto;
+  -webkit-appearance: auto;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-top: 0.2rem;
+  cursor: pointer;
+  border: 2px solid #ccc;
+}
+
+.form-check-input:checked {
+  accent-color: #22c55e; 
+  border-color: #22c55e;
+  box-shadow: 0 0 0 0.2rem #22c55e44;
+}
+
+.form-check-input:not(:checked) {
+  accent-color: #ef4444; 
+  border-color: #ef4444;
+  box-shadow: 0 0 0 0.2rem #ef444444;
+}
+
+.form-check-label {
+  cursor: pointer;
+  user-select: none;
+}
+
 /* Boutons */
 .btn-primary, button[type="submit"] {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
 }
 .btn-primary:hover, button[type="submit"]:hover {
-  background: var(--primary-dark) !important;
+  background: var(--secondary) !important;
   border-color: var(--primary-dark) !important;
 }
 
