@@ -1,13 +1,13 @@
 /* Lisibilité d'abord */
 :root {
-  --bg: #f7f8fa;
-  --card: #ffffff;
-  --text: #111827;          /* gris très foncé */
-  --muted: #4b5563;         /* gris moyen */
-  --primary: #3b82f6;       /* bleu lisible */
-  --primary-dark: #1d4ed8;  /* bleu foncé */
-  --border: #e5e7eb;        /* gris clair */
-  --table-stripe: #f3f4f6;  /* alternance douce */
+  --primary: #6c63ff;      /* violet principal */
+  --primary-dark: #4e46d6;
+  --secondary: #ff6584;    /* accent rose */
+  --bg: #f5f7fb;           /* fond général */
+  --surface: #ffffff;      /* cartes & formulaires */
+  --text: #2c2c2c;         /* texte principal */
+  --text-light: #666;      /* texte secondaire */
+  --border: #e0e0e0;       /* bordures discrètes */
 }
 
 html, body {
@@ -29,7 +29,24 @@ main {
   margin: 2rem auto;
   padding: 0 1rem;
 }
+/* Header et footer custom */
+.custom-navbar {
+  background-color: var(--primary);  /* bleu Material-like */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
 
+.custom-navbar .navbar-brand {
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.custom-footer {
+  background-color: var(--primary);
+  color: #fff;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
 /* Titres sobres */
 h1, h2 {
   letter-spacing: .2px;
@@ -100,17 +117,6 @@ table.table {
   vertical-align: middle;
 }
 
-/* Badge stock */
-.badge-stock {
-  background: #10b981;   /* vert */
-  color: #fff;
-  font-weight: 600;
-}
-.badge-out {
-  background: #ef4444;   /* rouge */
-  color: #fff;
-  font-weight: 600;
-}
 
 /* Footer */
 footer {
